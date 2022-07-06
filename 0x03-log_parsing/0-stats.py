@@ -1,45 +1,37 @@
 #!/usr/bin/python3
-"""
-    Reads stdin line by line and computes metrics:
-    For every 10 lines:
-        - print the status number with the number of times it
-        appears
-        - print the sum of the file sizes
-"""
-if __name__ == "__main__":
-    import sys
-    import signal
+'''a script that reads stdin line by line and computes metrics'''
 
-    c = fileSize = 0
-    statCount = {"200": 0, "301": 0, "400": 0, "401": 0, "403": 0,
-                 "404": 0, "405": 0, "500": 0}
 
-    def handleTen(statCount, fileSize):
-        print("File size: {}".format(fileSize))
-        for key in sorted(statCount.keys()):
-            if statCount[key] == 0:
-                continue
-            print("{}: {}".format(key, statCount[key]))
+import sys
 
-    try:
-        for line in sys.stdin:
-            c += 1
-            split = line.split(" ")
-            try:
-                status = split[-2]
-                fileSize += int(split[-1])
+cache = {'200': 0, '301': 0, '400': 0, '401': 0,
+         '403': 0, '404': 0, '405': 0, '500': 0}
+total_size = 0
+counter = 0
 
-                if status in statCount:
-                    statCount[status] += 1
-            except Exception:
-                pass
+try:
+    for line in sys.stdin:
+        line_list = line.split(" ")
+        if len(line_list) > 4:
+            code = line_list[-2]
+            size = int(line_list[-1])
+            if code in cache.keys():
+                cache[code] += 1
+            total_size += size
+            counter += 1
 
-            if c % 10 == 0:
-                handleTen(statCount, fileSize)
+        if counter == 10:
+            counter = 0
+            print('File size: {}'.format(total_size))
+            for key, value in sorted(cache.items()):
+                if value != 0:
+                    print('{}: {}'.format(key, value))
 
-        else:
-            handleTen(statCount, fileSize)
+except Exception as err:
+    pass
 
-    except (KeyboardInterrupt, SystemExit):
-        handleTen(statCount, fileSize)
-        raise
+finally:
+    print('File size: {}'.format(total_size))
+    for key, value in sorted(cache.items()):
+        if value != 0:
+            print('{}: {}'.format(key, value))
